@@ -1,0 +1,119 @@
+syntax = "proto3";
+package userplan;
+
+option go_package = "hamgit.ir/arcaptcha/arcaptcha-dumbledore/protos;pb";
+
+import "google/api/annotations.proto";
+
+message Empty {}
+
+// -------------------- User Service --------------------
+
+service UserService {
+    rpc ListUsers(UserFilter) returns (PaginatedUsers) {
+        option (google.api.http) = {
+            get: "/v1/users"
+        };
+    }
+
+    rpc CreateUser(CreateUserRequest) returns (Empty) {
+        option (google.api.http) = {
+            post: "/v1/users"
+            body: "user"
+        };
+    }
+
+    rpc UpdateUser(UpdateUserRequest) returns (Empty) {
+        option (google.api.http) = {
+            put: "/v1/users/{user.id}"
+            body: "user"
+        };
+    }
+
+    rpc SetUserActive(UserActivationRequest) returns (Empty) {
+        option (google.api.http) = {
+            patch: "/v1/users/{user_id}/active"
+            body: "active"
+        };
+    }
+}
+
+message User {
+    uint64 id = 1;
+    string name = 2;
+    string email = 3;
+    string phone = 4;
+    bool active = 5;
+}
+
+message UserFilter {
+    string name = 1;
+    string email = 2;
+    string phone = 3;
+    int64 page = 4;
+    int64 size = 5;
+}
+
+message CreateUserRequest {
+    User user = 1;
+}
+
+message UpdateUserRequest {
+    User user = 1;
+}
+
+message PaginatedUsers {
+    repeated User users = 1;
+    int64 total = 2;
+    int64 size = 3;
+    int64 page = 4;
+}
+
+message UserActivationRequest {
+    uint64 user_id = 1; // from path
+    bool active = 2;    // from body
+}
+
+// -------------------- Plan Service --------------------
+
+service PlanService {
+    rpc AssignPlan(PlanAssignmentRequest) returns (Empty) {
+        option (google.api.http) = {
+            post: "/v1/users/{user_id}/plans/{plan_id}:assign"
+            body: ""  // only path params, no body
+        };
+    }
+
+    rpc GetUserPlan(UserPlanRequest) returns (Plan) {
+        option (google.api.http) = {
+            get: "/v1/users/{user_id}/plan"
+        };
+    }
+
+    rpc RenewUserPlan(RenewPlanRequest) returns (Empty) {
+        option (google.api.http) = {
+            post: "/v1/users/{user_id}/plan:renew"
+            body: ""  // only path param, no body
+        };
+    }
+}
+
+message Plan {
+    uint64 id = 1;
+    string name = 2;
+    string description = 3;
+    int64 duration_days = 4;
+}
+
+message PlanAssignmentRequest {
+    uint64 user_id = 1; // from path
+    uint64 plan_id = 2; // from path
+}
+
+message UserPlanRequest {
+    uint64 user_id = 1; // from path
+}
+
+message RenewPlanRequest {
+    uint64 user_id = 1; // from path
+}

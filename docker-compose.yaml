@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  userplan:
+    build:
+      context: ./userplan
+      dockerfile: Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      - DB_HOST=postgres-userplan
+      - DB_PORT=5432
+    depends_on:
+      - postgres-userplan
+      - redis
+
+  management:
+    build:
+      context: ./management-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - USERPLAN_GRPC_ADDR=userplan:50051
+    depends_on:
+      - userplan
+
+  postgres-userplan:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=userplan
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=userplan
+    ports:
+      - "5432:5432"
+    volumes:
+      - userplan-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+volumes:
+  userplan-data:
+  redis-data:
+  grafana-data:
