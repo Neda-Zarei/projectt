@@ -43,7 +43,7 @@ func Run(cfg config.Config, log *zap.Logger) error {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
-	handler := myhttp.NewHandler(a)
+	handler := myhttp.NewHandler(a, db)
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Config().Server.Host, a.Config().Server.Port),
 		Handler:      handler.SetupRoutes(),

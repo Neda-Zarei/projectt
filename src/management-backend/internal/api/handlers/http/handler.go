@@ -11,6 +11,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -21,20 +22,22 @@ type Handler struct {
 	plan        *PlanHandler
 	userService userport.Service
 	planService port.Service
+	db          *gorm.DB
 }
 
-func NewHandler(a app.App) *Handler {
+func NewHandler(a app.App, db *gorm.DB) *Handler {
 	e := echo.New()
 
-	userRepo := repository.NewUserRepository(a.Config().DB) // You'll need to implement this
+	userRepo := repository.NewUserRepository(db)
 	userService := user.NewService(userRepo)
 
-	planRepo := repository.NewPlanRepository(a.Config().DB) // You'll need to implement this
+	planRepo := repository.NewPlanRepository(db)
 	planService := plan.NewService(planRepo)
 
 	return &Handler{
 		app:         a,
 		echo:        e,
+		db:          db,
 		userService: userService,
 		planService: planService,
 		auth:        NewAuthHandler(a, userService),
