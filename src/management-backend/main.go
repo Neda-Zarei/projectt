@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -15,7 +16,9 @@ var envfile = flag.String("envfile", "", "path to configuration env file")
 func main() {
 	flag.Parse()
 	if *envfile != "" {
-		godotenv.Load(*envfile)
+		if err := godotenv.Load(*envfile); err != nil {
+			log.Printf("Warning: Error loading .env file: %v", err)
+		}
 	}
 	cfg, err := config.ReadEnv()
 	if err != nil {
