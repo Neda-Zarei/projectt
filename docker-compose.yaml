@@ -1,67 +1,189 @@
 version: '3.8'
 
 services:
+  management-backend:
+    build:
+      context: ./src/management-backend
+      dockerfile: build/Dockerfile
+    container_name: management-backend
+    ports:
+      - "8001:8001"  # REST API
+      - "9001:9001"  # gRPC
+    environment:
+      - DEV_ENV=${DEV_ENV:-true}
+      - DB_HOST=${MANAGEMENT_DB_HOST:-management-db}
+      - DB_PORT=${MANAGEMENT_DB_PORT:-5432}
+      - DB_NAME=${MANAGEMENT_DB_NAME:-managementdb}
+      - DB_SCHEMA=${MANAGEMENT_DB_SCHEMA:-public}
+      - DB_USER=${MANAGEMENT_DB_USER:-management}
+      - DB_PASSWORD=${MANAGEMENT_DB_PASSWORD:-management_password_123}
+      - DB_APP_NAME=${MANAGEMENT_DB_APP_NAME:-management-service}
+      - REDIS_URL=${REDIS_URL:-redis://management-redis:6379}
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret}
+      - GRPC_PORT=9001
+      - HTTP_PORT=8001
+      - USERPLAN_SERVICE_GRPC_URL=userplan:9002
+    depends_on:
+      - management-db
+      - management-redis
+    networks:
+      - app-network
+    volumes:
+      - ./src/management-backend:/app
+    restart: unless-stopped
+
   userplan:
     build:
-      context: ./userplan
-      dockerfile: Dockerfile
+      context: ./src/userplan
+      dockerfile: build/Dockerfile
+    container_name: userplan
     ports:
-      - "50051:50051"
+      - "8002:8002"  # REST API
+      - "9002:9002"  # gRPC
     environment:
-      - DB_HOST=postgres-userplan
-      - DB_PORT=5432
+      - DEV_ENV=${DEV_ENV:-true}
+      - DB_HOST=${USERPLAN_DB_HOST:-userplan-db}
+      - DB_PORT=${USERPLAN_DB_PORT:-5432}
+      - DB_NAME=${USERPLAN_DB_NAME:-userplandb}
+      - DB_SCHEMA=${USERPLAN_DB_SCHEMA:-public}
+      - DB_USER=${USERPLAN_DB_USER:-userplan}
+      - DB_PASSWORD=${USERPLAN_DB_PASSWORD:-userplan_password_123}
+      - DB_APP_NAME=${USERPLAN_DB_APP_NAME:-userplan-service}
+      - REDIS_URL=${USERPLAN_REDIS_URL:-redis://userplan-redis:6379}
+      - GRPC_PORT=9002
+      - HTTP_PORT=8002
+      - MANAGEMENT_SERVICE_GRPC_URL=management-backend:9001
     depends_on:
-      - postgres-userplan
-      - redis
-
-  management:
-    build:
-      context: ./management-backend
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - USERPLAN_GRPC_ADDR=userplan:50051
-    depends_on:
-      - userplan
-
-  postgres-userplan:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=userplan
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=userplan
-    ports:
-      - "5432:5432"
+      - userplan-db
+      - userplan-redis
+    networks:
+      - app-network
     volumes:
-      - userplan-data:/var/lib/postgresql/data
+      - ./src/userplan:/app
+    restart: unless-stopped
 
-  redis:
+  management-db:
+    image: postgres:15-alpine
+    container_name: management-db
+    environment:
+      - POSTGRES_DB=${MANAGEMENT_DB_NAME:-managementdb}
+      - POSTGRES_USER=${MANAGEMENT_DB_USER:-management}
+      - POSTGRES_PASSWORD=${MANAGEMENT_DB_PASSWORD:-management_password_123}
+    volumes:
+      - management_db_data:/var/lib/postgresql/data
+      - ./init-scripts/management-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  userplan-db:
+    image: postgres:15-alpine
+    container_name: userplan-db
+    environment:
+      - POSTGRES_DB=${USERPLAN_DB_NAME:-userplandb}
+      - POSTGRES_USER=${USERPLAN_DB_USER:-userplan}
+      - POSTGRES_PASSWORD=${USERPLAN_DB_PASSWORD:-userplan_password_123}
+    volumes:
+      - userplan_db_data:/var/lib/postgresql/data
+      - ./init-scripts/userplan-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  management-redis:
     image: redis:7-alpine
+    container_name: management-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     volumes:
-      - redis-data:/data
+      - management_redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
-  grafana:
-    image: grafana/grafana:latest
+  userplan-redis:
+    image: redis:7-alpine
+    container_name: userplan-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "3000:3000"
+      - "6380:6379" 
     volumes:
-      - grafana-data:/var/lib/grafana
-    depends_on:
-      - prometheus
+      - userplan_redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   prometheus:
     image: prom/prometheus:latest
+    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - management-backend
+      - userplan
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  userplan-data:
-  redis-data:
-  grafana-data:
+  management_db_data:
+  userplan_db_data:
+  management_redis_data:
+  userplan_redis_data:
+  prometheus_data:
+  grafana_data:
