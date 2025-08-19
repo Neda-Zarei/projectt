@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/app"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/config"
 	myhttp "hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/api/handlers/http"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/pkg/database"
 )
 
 func Run(cfg config.Config, log *zap.Logger) error {
@@ -21,6 +23,24 @@ func Run(cfg config.Config, log *zap.Logger) error {
 
 	if a.Config().DevEnv {
 		a.Logger().Debug("development environment")
+	}
+
+	db, err := database.NewPostgresConnection(
+		a.Config().DB.Host,
+		a.Config().DB.Port,
+		a.Config().DB.DBName,
+		a.Config().DB.Schema,
+		a.Config().DB.User,
+		a.Config().DB.Password,
+		a.Config().DB.AppName,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	//auto migrate tables
+	if err := autoMigrate(db); err != nil {
+		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
 	handler := myhttp.NewHandler(a)
@@ -42,7 +62,7 @@ func Run(cfg config.Config, log *zap.Logger) error {
 		}
 	}()
 
-	//wait for shutdown sig
+	//wait for shutdown signal
 	<-context.Background().Done()
 
 	a.Logger().Info("shutting down server")
@@ -53,5 +73,14 @@ func Run(cfg config.Config, log *zap.Logger) error {
 		return fmt.Errorf("server shutdown failed: %w", err)
 	}
 
+	return nil
+}
+
+func autoMigrate(db *gorm.DB) error {
+	// add models here for auto migration
+	// return db.AutoMigrate(
+	//     &user.domain.AdminUser{},
+	//     &plan.domain.Plan{},
+	// )
 	return nil
 }
