@@ -27,16 +27,3 @@ func parseQueryParamInt(c echo.Context, paramName string, defaultValue int) int 
 	}
 	return value
 }
-
-func parseQueryParamBool(c echo.Context, paramName string, defaultValue bool) bool {
-	param := c.QueryParam(paramName)
-	if param == "" {
-		return defaultValue
-	}
-
-	value, err := strconv.ParseBool(param)
-	if err != nil {
-		return defaultValue
-	}
-	return value
-}
