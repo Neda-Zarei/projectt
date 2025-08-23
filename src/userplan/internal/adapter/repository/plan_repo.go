@@ -5,22 +5,14 @@ import (
 
 	"gorm.io/gorm"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/domain"
+	planP "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/port"
 )
-
-type PlanRepository interface {
-	Create(ctx context.Context, plan *domain.Plan) error
-	GetByID(ctx context.Context, id uint) (*domain.Plan, error)
-	GetByName(ctx context.Context, name string) (*domain.Plan, error)
-	Update(ctx context.Context, plan *domain.Plan) error
-	ToggleActive(ctx context.Context, id uint) error
-	ListActive(ctx context.Context) ([]*domain.Plan, error)
-}
 
 type planRepository struct {
 	db *gorm.DB
 }
 
-func NewPlanRepository(db *gorm.DB) PlanRepository {
+func NewPlanRepository(db *gorm.DB) planP.PlanRepository {
 	return &planRepository{db: db}
 }
 

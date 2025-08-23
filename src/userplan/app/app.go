@@ -7,9 +7,12 @@ import (
 	"gorm.io/gorm"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/config"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan"
+	planD "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/domain"
 	planP "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/port"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/user"
+	userD "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/user/domain"
 	userP "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/user/port"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/pkg/database"
 )
 
 var (
@@ -35,7 +38,7 @@ func New(cfg config.Config, log *zap.Logger) (App, error) {
 	if log == nil {
 		return nil, ErrNilLogger
 	}
-	db, err := initDB(cfg.DB)
+	db, err := initDB(cfg.DB, log)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +49,25 @@ func New(cfg config.Config, log *zap.Logger) (App, error) {
 	}, nil
 }
 
-// TODO
-func initDB(_ config.DBConfig) (*gorm.DB, error) { return nil, nil }
+func initDB(c config.DBConfig, log *zap.Logger) (*gorm.DB, error) {
+	dsn := database.PostgresDSN(
+		c.Host, c.Port, c.DBName, c.Schema, c.User, c.Password, c.AppName,
+	)
+	db, err := database.NewPostgresConnectionWithLogger(dsn, log)
+	if err != nil {
+		return nil, err
+	}
+	err = db.AutoMigrate(
+		&userD.User{},
+		&planD.Plan{},
+		&planD.UserPlan{},
+		&planD.PlanHistory{},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
 
 func (a *app) Config() config.Config { return a.cfg }
 

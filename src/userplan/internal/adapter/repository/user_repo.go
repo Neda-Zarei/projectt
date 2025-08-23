@@ -5,22 +5,14 @@ import (
 
 	"gorm.io/gorm"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/user/domain"
+	userP "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/user/port"
 )
-
-type UserRepository interface {
-	Create(ctx context.Context, user *domain.User) error
-	GetByID(ctx context.Context, id uint) (*domain.User, error)
-	GetByExternalID(ctx context.Context, externalID string) (*domain.User, error)
-	GetByEmail(ctx context.Context, email string) (*domain.User, error)
-	Update(ctx context.Context, user *domain.User) error
-	ToggleActive(ctx context.Context, id uint) error
-}
 
 type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB) userP.Repo {
 	return &userRepository{db: db}
 }
 

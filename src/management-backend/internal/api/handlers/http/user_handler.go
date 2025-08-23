@@ -4,19 +4,17 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/app"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/admin/domain"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/admin/port"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/api/dto"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/user/domain"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/user/port"
 )
 
 type UserHandler struct {
-	app     app.App
 	service port.Service
 }
 
-func NewUserHandler(a app.App, service port.Service) *UserHandler {
-	return &UserHandler{app: a, service: service}
+func NewUserHandler(s port.Service) *UserHandler {
+	return &UserHandler{service: s}
 }
 
 func (h *UserHandler) CreateUser(c echo.Context) error {

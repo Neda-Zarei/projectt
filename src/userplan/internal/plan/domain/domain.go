@@ -54,3 +54,13 @@ type PlanHistory struct {
 	ChangedAt  time.Time   `json:"changed_at"`
 	Metadata   common.JSON `gorm:"type:json" json:"metadata"`
 }
+
+type AssignPlanRequest struct {
+	UserID uint
+	PlanID uint
+}
+
+type RenewPlanRequest struct {
+	UserID  uint
+	EndDate time.Time
+}

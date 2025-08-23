@@ -6,18 +6,19 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/app"
+
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/config"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/admin/port"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/api/dto"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/user/port"
 )
 
 type AuthHandler struct {
-	app     app.App
 	service port.Service
+	cfg     config.JWTConfig
 }
 
-func NewAuthHandler(a app.App, service port.Service) *AuthHandler {
-	return &AuthHandler{app: a, service: service}
+func NewAuthHandler(s port.Service, c config.JWTConfig) *AuthHandler {
+	return &AuthHandler{service: s, cfg: c}
 }
 
 func (h *AuthHandler) Login(c echo.Context) error {
@@ -41,9 +42,9 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	claims["userID"] = user.ID
 	claims["email"] = user.Email
 	claims["role"] = user.Role
-	claims["exp"] = time.Now().Add(time.Hour * time.Duration(h.app.Config().JWT.Expiration)).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * time.Duration(h.cfg.Expiration)).Unix()
 
-	tokenString, err := token.SignedString([]byte(h.app.Config().JWT.Secret))
+	tokenString, err := token.SignedString([]byte(h.cfg.Secret))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": "Failed to generate token"})
 	}

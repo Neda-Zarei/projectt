@@ -1,27 +1,43 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/labstack/echo/v4"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/app"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan/domain"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan/port"
 )
 
+var Validate = validator.New()
+
 type PlanHandler struct {
-	app     app.App
 	service port.Service
 }
 
-func NewPlanHandler(a app.App, service port.Service) *PlanHandler {
-	return &PlanHandler{app: a, service: service}
+func NewPlanHandler(s port.Service) *PlanHandler {
+	return &PlanHandler{service: s}
 }
 
 func (h *PlanHandler) CreatePlan(c echo.Context) error {
 	var plan domain.Plan
 	if err := c.Bind(&plan); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{"error": "Invalid request"})
+	}
+	if err := Validate.Struct(plan); err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+
+		errors := make(map[string]string)
+		for _, e := range validationErrors {
+			errors[e.Field()] = fmt.Sprintf("failed on '%s' validation", e.Tag())
+		}
+
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error":  "validation failed",
+			"fields": errors,
+		})
 	}
 
 	if err := h.service.CreatePlan(c.Request().Context(), &plan); err != nil {

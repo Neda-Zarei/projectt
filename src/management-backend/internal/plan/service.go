@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/api/pb"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan/domain"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan/port"
 )
@@ -14,11 +17,17 @@ var (
 )
 
 type service struct {
-	repo port.Repository
+	repo       port.Repository
+	logger     *zap.Logger
+	planClient pb.PlanServiceClient
 }
 
-func NewService(repo port.Repository) port.Service {
-	return &service{repo: repo}
+func NewService(repo port.Repository, logger *zap.Logger, cc *grpc.ClientConn) port.Service {
+	return &service{
+		repo:       repo,
+		logger:     logger,
+		planClient: pb.NewPlanServiceClient(cc),
+	}
 }
 
 func (s *service) CreatePlan(ctx context.Context, plan *domain.Plan) error {

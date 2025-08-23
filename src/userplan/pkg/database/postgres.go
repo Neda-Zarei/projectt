@@ -9,7 +9,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	applogger "hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/pkg/logger"
+	applogger "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/pkg/logger"
 )
 
 func NewPostgresConnection(host string, port uint, dbName, schema, user, password, appName string) (*gorm.DB, error) {

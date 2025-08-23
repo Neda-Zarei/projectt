@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   management-backend:
@@ -7,8 +7,8 @@ services:
       dockerfile: build/Dockerfile
     container_name: management-backend
     ports:
-      - "8001:8001"  # REST API
-      - "9001:9001"  # gRPC
+      - "8001:8001" # REST API
+      - "9001:9001" # gRPC
     environment:
       - DEV_ENV=${DEV_ENV:-true}
       - DB_HOST=${MANAGEMENT_DB_HOST:-management-db}
@@ -23,13 +23,13 @@ services:
       - GRPC_PORT=9001
       - HTTP_PORT=8001
       - USERPLAN_SERVICE_GRPC_URL=userplan:9002
+    env_file:
+      - ./src/management-backend/.env
     depends_on:
       - management-db
       - management-redis
     networks:
       - app-network
-    volumes:
-      - ./src/management-backend:/app
     restart: unless-stopped
 
   userplan:
@@ -38,8 +38,8 @@ services:
       dockerfile: build/Dockerfile
     container_name: userplan
     ports:
-      - "8002:8002"  # REST API
-      - "9002:9002"  # gRPC
+      - "8002:8002" # REST API
+      - "9002:9002" # gRPC
     environment:
       - DEV_ENV=${DEV_ENV:-true}
       - DB_HOST=${USERPLAN_DB_HOST:-userplan-db}
@@ -53,13 +53,13 @@ services:
       - GRPC_PORT=9002
       - HTTP_PORT=8002
       - MANAGEMENT_SERVICE_GRPC_URL=management-backend:9001
+    env_file:
+      - ./src/userplan/.env
     depends_on:
       - userplan-db
       - userplan-redis
     networks:
       - app-network
-    volumes:
-      - ./src/userplan:/app
     restart: unless-stopped
 
   management-db:
@@ -112,7 +112,7 @@ services:
     container_name: userplan-redis
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "6380:6379" 
+      - "6380:6379"
     volumes:
       - userplan_redis_data:/data
     networks:
@@ -133,12 +133,12 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
     networks:
       - app-network
     restart: unless-stopped

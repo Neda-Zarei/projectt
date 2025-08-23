@@ -17,3 +17,20 @@ type User struct {
 	DateOfBirth time.Time `json:"date_of_birth"`
 	IsActive    bool      `gorm:"default:true" json:"is_active"`
 }
+
+type UserFilter struct {
+	UserID uint
+	Name   string
+	Email  string
+	Phone  string
+}
+
+type PaginatedUsers struct {
+	Users             []*User
+	Page, Size, Total int64
+}
+
+type UserActivation struct {
+	UserID uint
+	Active bool
+}

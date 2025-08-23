@@ -23,17 +23,21 @@ func Run(cfg config.Config, log *zap.Logger) (err error) {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	serverErr := make(chan error, 1)
 	go func() {
 		log.Info("server started")
-		err = server.Start()
+		serverErr <- server.Start()
 	}()
-	
-	<-stop
-	server.Shutdown()
-	if err != nil {
-		log.Error("server failed")
-	} else {
-		log.Info("server shutdown")
+
+	select {
+	case <-stop:
+		a.Logger().Info("shutdown signal received")
+	case err := <-serverErr:
+		a.Logger().Error("server failed")
+		return err
 	}
-	return
+
+	server.Shutdown()
+	log.Info("server shutdown complete")
+	return nil
 }

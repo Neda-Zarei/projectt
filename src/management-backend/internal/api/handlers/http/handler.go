@@ -1,55 +1,35 @@
 package http
 
 import (
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/app"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/adapter/repository"
-	mw "hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/api/middleware"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan/port"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/user"
-	userport "hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/user/port"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"gorm.io/gorm"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/app"
+	mw "hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/api/middleware"
 )
 
 type Handler struct {
-	app         app.App
-	echo        *echo.Echo
-	auth        *AuthHandler
-	user        *UserHandler
-	plan        *PlanHandler
-	userService userport.Service
-	planService port.Service
-	db          *gorm.DB
+	app  app.App
+	echo *echo.Echo
+	auth *AuthHandler
+	user *UserHandler
+	plan *PlanHandler
 }
 
-func NewHandler(a app.App, db *gorm.DB) *Handler {
-	e := echo.New()
-
-	userRepo := repository.NewUserRepository(db)
-	userService := user.NewService(userRepo)
-
-	planRepo := repository.NewPlanRepository(db)
-	planService := plan.NewService(planRepo)
-
+func NewHandler(a app.App) *Handler {
 	return &Handler{
-		app:         a,
-		echo:        e,
-		db:          db,
-		userService: userService,
-		planService: planService,
-		auth:        NewAuthHandler(a, userService),
-		user:        NewUserHandler(a, userService),
-		plan:        NewPlanHandler(a, planService),
+		app:  a,
+		echo: echo.New(),
+		auth: NewAuthHandler(a.UserService(), a.Config().JWT),
+		user: NewUserHandler(a.UserService()),
+		plan: NewPlanHandler(a.PlanService()),
 	}
 }
 
 func (h *Handler) SetupRoutes() *echo.Echo {
 	e := h.echo
 	e.Use(middleware.CORS())
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestID())
+	e.Use(mw.Logger(h.app.Logger()))
 	e.Use(middleware.Recover())
 
 	//public routes

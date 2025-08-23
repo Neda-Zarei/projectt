@@ -7,22 +7,14 @@ import (
 
 	"gorm.io/gorm"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/domain"
+	planP "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/port"
 )
-
-type UserPlanRepository interface {
-	AssignPlan(ctx context.Context, userPlan *domain.UserPlan) error
-	GetByUserID(ctx context.Context, userID uint) (*domain.UserPlan, error)
-	RenewPlan(ctx context.Context, userID uint, newEndDate time.Time) error
-	CancelPlan(ctx context.Context, userID uint) error
-	GetHistory(ctx context.Context, userID uint) ([]*domain.PlanHistory, error)
-	RecordHistory(ctx context.Context, history *domain.PlanHistory) error
-}
 
 type userPlanRepository struct {
 	db *gorm.DB
 }
 
-func NewUserPlanRepository(db *gorm.DB) UserPlanRepository {
+func NewUserPlanRepository(db *gorm.DB) planP.UserPlanRepository {
 	return &userPlanRepository{db: db}
 }
 

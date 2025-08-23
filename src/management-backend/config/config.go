@@ -21,10 +21,11 @@ type DBConfig struct {
 }
 
 type ServerConfig struct {
-	Port         int    `json:"port" env:"PORT,required,notEmpty" envDefault:"8080"`
-	Host         string `json:"host" env:"HOST,required,notEmpty" envDefault:"0.0.0.0"`
-	ReadTimeout  int    `json:"readTimeout" env:"READ_TIMEOUT" envDefault:"30"`
-	WriteTimeout int    `json:"writeTimeout" env:"WRITE_TIMEOUT" envDefault:"30"`
+	Port            int    `json:"port" env:"PORT,required,notEmpty" envDefault:"8080"`
+	Host            string `json:"host" env:"HOST,required,notEmpty" envDefault:"0.0.0.0"`
+	ReadTimeout     int    `json:"readTimeout" env:"READ_TIMEOUT" envDefault:"30"`
+	WriteTimeout    int    `json:"writeTimeout" env:"WRITE_TIMEOUT" envDefault:"30"`
+	ShutdownTimeout int    `json:"shutdownTimeout" env:"SHUTDOWN_TIMEOUT" envDefault:"5"`
 }
 
 type JWTConfig struct {
