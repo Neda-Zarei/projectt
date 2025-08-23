@@ -1,6 +1,8 @@
 module hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend
 
-go 1.25.0
+go 1.23.0
+
+toolchain go1.23.2
 
 require (
 	github.com/caarlos0/env/v11 v11.3.1

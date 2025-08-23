@@ -20,6 +20,7 @@ const (
 	PlanActionDowngrade = "downgrade"
 )
 
+// subscription plan template
 type Plan struct {
 	common.BaseModel
 	Name        string      `gorm:"size:100;uniqueIndex" json:"name"`
@@ -30,18 +31,14 @@ type Plan struct {
 	IsActive    bool        `gorm:"default:true" json:"is_active"`
 }
 
+// user's active subscriptions
 type UserPlan struct {
 	common.BaseModel
-	UserID         uint      `gorm:"index" json:"user_id"`
-	PlanID         uint      `gorm:"index" json:"plan_id"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	IsAutoRenew    bool      `gorm:"default:true" json:"is_auto_renew"`
-	LastRenewalAt  time.Time `json:"last_renewal_at"`
-	NextRenewalAt  time.Time `json:"next_renewal_at"`
-	Status         string    `gorm:"size:20;default:active" json:"status"`
-	PaymentGateway string    `gorm:"size:50" json:"payment_gateway"`
-	TransactionID  string    `gorm:"size:255" json:"transaction_id"`
+	UserID    uint      `gorm:"index" json:"user_id"`
+	PlanID    uint      `gorm:"index" json:"plan_id"`
+	StartDate time.Time `json:"start_date"`
+	ExpiresAt time.Time `gorm:"index" json:"expires_at"` // expiration date at 00:00 of the day
+	Status    string    `gorm:"size:20;default:active" json:"status"`
 }
 
 // tracks changes to user plans
@@ -55,6 +52,7 @@ type PlanHistory struct {
 	Metadata   common.JSON `gorm:"type:json" json:"metadata"`
 }
 
+// DTOs
 type AssignPlanRequest struct {
 	UserID uint
 	PlanID uint
@@ -63,4 +61,20 @@ type AssignPlanRequest struct {
 type RenewPlanRequest struct {
 	UserID  uint
 	EndDate time.Time
+}
+
+func CalculateExpirationDate(startDate time.Time, durationDays int) time.Time {
+	expirationDate := startDate.AddDate(0, 0, durationDays)
+
+	//setting the time to 00:00:00 of the expiration day
+	return time.Date(expirationDate.Year(), expirationDate.Month(), expirationDate.Day(), 0, 0, 0, 0, expirationDate.Location())
+}
+
+func IsExpired(expiresAt time.Time) bool {
+	return time.Now().After(expiresAt)
+}
+
+func IsExpiringSoon(expiresAt time.Time, daysThreshold int) bool {
+	thresholdDate := time.Now().AddDate(0, 0, daysThreshold)
+	return expiresAt.Before(thresholdDate) && !IsExpired(expiresAt)
 }

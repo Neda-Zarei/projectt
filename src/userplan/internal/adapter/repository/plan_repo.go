@@ -47,3 +47,7 @@ func (r *planRepository) ListActive(ctx context.Context) ([]*domain.Plan, error)
 	err := r.db.WithContext(ctx).Where("is_active = ?", true).Find(&plans).Error
 	return plans, err
 }
+
+func (r *planRepository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&domain.Plan{}, id).Error
+}

@@ -1,4 +1,3 @@
-// designed for use by grpc handlers in the userplan service
 package repository
 
 import (
@@ -6,6 +5,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/common"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/domain"
 	planP "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/port"
 )
@@ -20,22 +20,20 @@ func NewUserPlanRepository(db *gorm.DB) planP.UserPlanRepository {
 
 func (r *userPlanRepository) AssignPlan(ctx context.Context, userPlan *domain.UserPlan) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		//canceling any existing active plan
 		if err := tx.Model(&domain.UserPlan{}).
 			Where("user_id = ? AND status = ?", userPlan.UserID, domain.PlanStatusActive).
 			Updates(map[string]interface{}{
-				"status":   domain.PlanStatusCanceled,
-				"end_date": time.Now(),
+				"status":     domain.PlanStatusCanceled,
+				"expires_at": time.Now(),
 			}).Error; err != nil {
 			return err
 		}
 
-		//a new plan assignment
 		if err := tx.Create(userPlan).Error; err != nil {
 			return err
 		}
 
-		//recording history
+		// record history
 		history := &domain.PlanHistory{
 			UserPlanID: userPlan.ID,
 			Action:     domain.PlanActionAssign,
@@ -62,7 +60,7 @@ func (r *userPlanRepository) RenewPlan(ctx context.Context, userID uint, newEndD
 			return err
 		}
 
-		//recoridng history before update
+		//record history before update
 		history := &domain.PlanHistory{
 			UserPlanID: userPlan.ID,
 			Action:     domain.PlanActionRenew,
@@ -70,10 +68,8 @@ func (r *userPlanRepository) RenewPlan(ctx context.Context, userID uint, newEndD
 			ChangedAt:  time.Now(),
 		}
 
-		//updating the plan
-		userPlan.EndDate = newEndDate
-		userPlan.LastRenewalAt = time.Now()
-		userPlan.NextRenewalAt = newEndDate.Add(-7 * 24 * time.Hour) // 7 days before end ??
+		//update the plan with new expiration date
+		userPlan.ExpiresAt = domain.CalculateExpirationDate(newEndDate, 0) // set to 00:00 of the specified date
 
 		if err := tx.Save(&userPlan).Error; err != nil {
 			return err
@@ -98,9 +94,8 @@ func (r *userPlanRepository) CancelPlan(ctx context.Context, userID uint) error 
 			ChangedAt:  time.Now(),
 		}
 
-		//updating plan status
 		userPlan.Status = domain.PlanStatusCanceled
-		userPlan.EndDate = time.Now()
+		userPlan.ExpiresAt = time.Now()
 
 		if err := tx.Save(&userPlan).Error; err != nil {
 			return err
@@ -122,4 +117,47 @@ func (r *userPlanRepository) GetHistory(ctx context.Context, userID uint) ([]*do
 
 func (r *userPlanRepository) RecordHistory(ctx context.Context, history *domain.PlanHistory) error {
 	return r.db.WithContext(ctx).Create(history).Error
+}
+
+func (r *userPlanRepository) ExpirePlans(ctx context.Context) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var expiredPlans []domain.UserPlan
+		if err := tx.Where("status = ? AND expires_at <= ?",
+			domain.PlanStatusActive, time.Now()).Find(&expiredPlans).Error; err != nil {
+			return err
+		}
+
+		for _, plan := range expiredPlans {
+			if err := tx.Model(&plan).Update("status", domain.PlanStatusExpired).Error; err != nil {
+				return err
+			}
+
+			history := &domain.PlanHistory{
+				UserPlanID: plan.ID,
+				Action:     "expired",
+				OldPlanID:  &plan.PlanID,
+				ChangedAt:  time.Now(),
+				Metadata: common.JSON{
+					"expired_at": time.Now(),
+				},
+			}
+			if err := tx.Create(history).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *userPlanRepository) GetExpiringPlans(ctx context.Context, daysThreshold int) ([]*domain.UserPlan, error) {
+	var plans []*domain.UserPlan
+	thresholdDate := time.Now().AddDate(0, 0, daysThreshold)
+
+	err := r.db.WithContext(ctx).
+		Where("status = ? AND expires_at <= ? AND expires_at > ?",
+			domain.PlanStatusActive, thresholdDate, time.Now()).
+		Find(&plans).Error
+
+	return plans, err
 }

@@ -15,12 +15,3 @@ type Service interface {
 	ListPlans(ctx context.Context, limit, offset int) ([]*domain.Plan, error)
 	TogglePlanActive(ctx context.Context, id uint) error
 }
-
-type Repository interface {
-	Create(ctx context.Context, plan *domain.Plan) error
-	GetByID(ctx context.Context, id uint) (*domain.Plan, error)
-	GetByName(ctx context.Context, name string) (*domain.Plan, error)
-	Update(ctx context.Context, plan *domain.Plan) error
-	Delete(ctx context.Context, id uint) error
-	List(ctx context.Context, limit, offset int) ([]*domain.Plan, error)
-}

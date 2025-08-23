@@ -36,12 +36,12 @@ func (s *userServiceServer) ListUsers(ctx context.Context, uf *pb.UserFilter) (*
 	}, nil
 }
 
-func (s *userServiceServer) CreateUser(ctx context.Context, u *pb.User) (*pb.Empty, error) {
-	return &pb.Empty{}, s.service.CreateUser(ctx, UserProto2Domain(u))
+func (s *userServiceServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.Empty, error) {
+	return &pb.Empty{}, s.service.CreateUser(ctx, UserProto2Domain(req.User))
 }
 
-func (s *userServiceServer) UpdateUser(ctx context.Context, u *pb.User) (*pb.Empty, error) {
-	return &pb.Empty{}, s.service.UpdateUser(ctx, UserProto2Domain(u))
+func (s *userServiceServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.Empty, error) {
+	return &pb.Empty{}, s.service.UpdateUser(ctx, UserProto2Domain(req.User))
 }
 
 func (s *userServiceServer) SetUserActive(ctx context.Context, ua *pb.UserActivationRequest) (*pb.Empty, error) {

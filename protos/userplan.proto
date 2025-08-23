@@ -3,39 +3,15 @@ package userplan;
 
 option go_package = "hamgit.ir/arcaptcha/arcaptcha-dumbledore/protos;pb";
 
-import "google/api/annotations.proto";
-
 message Empty {}
 
 // -------------------- User Service --------------------
 
 service UserService {
-    rpc ListUsers(UserFilter) returns (PaginatedUsers) {
-        option (google.api.http) = {
-            get: "/v1/users"
-        };
-    }
-
-    rpc CreateUser(CreateUserRequest) returns (Empty) {
-        option (google.api.http) = {
-            post: "/v1/users"
-            body: "user"
-        };
-    }
-
-    rpc UpdateUser(UpdateUserRequest) returns (Empty) {
-        option (google.api.http) = {
-            put: "/v1/users/{user.id}"
-            body: "user"
-        };
-    }
-
-    rpc SetUserActive(UserActivationRequest) returns (Empty) {
-        option (google.api.http) = {
-            patch: "/v1/users/{user_id}/active"
-            body: "active"
-        };
-    }
+    rpc ListUsers(UserFilter) returns (PaginatedUsers);
+    rpc CreateUser(CreateUserRequest) returns (Empty);
+    rpc UpdateUser(UpdateUserRequest) returns (Empty);
+    rpc SetUserActive(UserActivationRequest) returns (Empty);
 }
 
 message User {
@@ -77,25 +53,18 @@ message UserActivationRequest {
 // -------------------- Plan Service --------------------
 
 service PlanService {
-    rpc AssignPlan(PlanAssignmentRequest) returns (Empty) {
-        option (google.api.http) = {
-            post: "/v1/users/{user_id}/plans/{plan_id}:assign"
-            body: ""  // only path params, no body
-        };
-    }
+    rpc AssignPlan(PlanAssignmentRequest) returns (Empty);
+    rpc GetUserPlan(UserPlanRequest) returns (Plan);
+    rpc RenewUserPlan(RenewPlanRequest) returns (Empty);
 
-    rpc GetUserPlan(UserPlanRequest) returns (Plan) {
-        option (google.api.http) = {
-            get: "/v1/users/{user_id}/plan"
-        };
-    }
-
-    rpc RenewUserPlan(RenewPlanRequest) returns (Empty) {
-        option (google.api.http) = {
-            post: "/v1/users/{user_id}/plan:renew"
-            body: ""  // only path param, no body
-        };
-    }
+    // Plan management methods
+    rpc CreatePlan(CreatePlanRequest) returns (Plan);
+    rpc GetPlanByID(PlanIDRequest) returns (Plan);
+    rpc GetPlanByName(PlanNameRequest) returns (Plan);
+    rpc UpdatePlan(UpdatePlanRequest) returns (Plan);
+    rpc DeletePlan(PlanIDRequest) returns (Empty);
+    rpc ListPlans(ListPlansRequest) returns (ListPlansResponse);
+    rpc TogglePlanActive(PlanIDRequest) returns (Empty);
 }
 
 message Plan {
@@ -103,6 +72,8 @@ message Plan {
     string name = 2;
     string description = 3;
     int64 duration_days = 4;
+    double price = 5;
+    bool is_active = 6;
 }
 
 message PlanAssignmentRequest {
@@ -116,4 +87,31 @@ message UserPlanRequest {
 
 message RenewPlanRequest {
     uint64 user_id = 1; // from path
+}
+
+// Plan management messages
+message CreatePlanRequest {
+    Plan plan = 1;
+}
+
+message PlanIDRequest {
+    uint64 id = 1; // from path
+}
+
+message PlanNameRequest {
+    string name = 1; // from path
+}
+
+message UpdatePlanRequest {
+    Plan plan = 1;
+}
+
+message ListPlansRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+message ListPlansResponse {
+    repeated Plan plans = 1;
+    int64 total = 2;
 }

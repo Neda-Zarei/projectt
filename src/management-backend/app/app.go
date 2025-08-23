@@ -72,7 +72,7 @@ func (a *app) UserService() userP.Service {
 
 func (a *app) PlanService() planP.Service {
 	if a.planService == nil {
-		a.planService = plan.NewService(repository.NewPlanRepository(a.db), a.log, a.cc)
+		a.planService = plan.NewService(a.log, a.cc)
 	}
 	return a.planService
 }
@@ -85,12 +85,18 @@ func initDB(c config.DBConfig, log *zap.Logger) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	// NOTE: we don't need user and plan table in management just maybe admin table
-	err = db.AutoMigrate()
+
+	// only migrate admin tables
+	// plan data will be managed by the userplan service via gRPC
+	err = db.AutoMigrate(
+	// add your admin domain models here
+	// &admin.Domain.AdminUser{},
+	)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: initial admin
+
+	// todo: initial admin setup
 	return db, nil
 }
 

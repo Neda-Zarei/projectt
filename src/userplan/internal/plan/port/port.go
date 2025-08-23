@@ -11,6 +11,19 @@ type Service interface {
 	AssignPlan(ctx context.Context, req *domain.AssignPlanRequest) error
 	GetUserPlan(ctx context.Context, userID uint) (*domain.UserPlan, error)
 	RenewUserPlan(ctx context.Context, req *domain.RenewPlanRequest) error
+
+	// Plan management methods
+	Create(ctx context.Context, plan *domain.Plan) error
+	GetByID(ctx context.Context, id uint) (*domain.Plan, error)
+	GetByName(ctx context.Context, name string) (*domain.Plan, error)
+	Update(ctx context.Context, plan *domain.Plan) error
+	Delete(ctx context.Context, id uint) error
+	ToggleActive(ctx context.Context, id uint) error
+	ListActive(ctx context.Context) ([]*domain.Plan, error)
+
+	// Expiration management methods
+	ExpirePlans(ctx context.Context) error
+	GetExpiringPlans(ctx context.Context, daysThreshold int) ([]*domain.UserPlan, error)
 }
 
 type Repo interface {
@@ -23,6 +36,7 @@ type PlanRepository interface {
 	GetByID(ctx context.Context, id uint) (*domain.Plan, error)
 	GetByName(ctx context.Context, name string) (*domain.Plan, error)
 	Update(ctx context.Context, plan *domain.Plan) error
+	Delete(ctx context.Context, id uint) error
 	ToggleActive(ctx context.Context, id uint) error
 	ListActive(ctx context.Context) ([]*domain.Plan, error)
 }
@@ -34,4 +48,8 @@ type UserPlanRepository interface {
 	CancelPlan(ctx context.Context, userID uint) error
 	GetHistory(ctx context.Context, userID uint) ([]*domain.PlanHistory, error)
 	RecordHistory(ctx context.Context, history *domain.PlanHistory) error
+
+	// Expiration management
+	ExpirePlans(ctx context.Context) error
+	GetExpiringPlans(ctx context.Context, daysThreshold int) ([]*domain.UserPlan, error)
 }

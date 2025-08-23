@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-
 	"github.com/labstack/echo/v4"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan/domain"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/plan/port"
