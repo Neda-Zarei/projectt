@@ -2,20 +2,26 @@ package domain
 
 import (
 	"time"
-
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/common"
 )
 
-// end users who can be assigned plans
+type Basic struct {
+	ID        uint      `gorm:"primarykey"`
+	CreatedAt time.Time `gorm:"<-:create;"`
+	UpdatedAt time.Time
+}
+
 type User struct {
-	common.BaseModel
-	ExternalID  string    `gorm:"size:255;uniqueIndex" json:"external_id"`
-	Email       string    `gorm:"size:255;index" json:"email"`
-	Phone       string    `gorm:"size:20;index" json:"phone"`
-	FirstName   string    `gorm:"size:100" json:"first_name"`
-	LastName    string    `gorm:"size:100" json:"last_name"`
-	DateOfBirth time.Time `json:"date_of_birth"`
-	IsActive    bool      `gorm:"default:true" json:"is_active"`
+	Basic
+	OauthID                string `json:"oauth_id,omitempty"`
+	Email                  string `json:"email" gorm:"not null"`
+	Name                   string `json:"name" gorm:"not null"`
+	Password               string `json:"password,omitempty"`
+	Phone                  string `json:"phone,omitempty"`
+	CompanyName            string `json:"company_name,omitempty"`
+	JobTitle               string `json:"job_title,omitempty"`
+	Active                 bool   `json:"active" gorm:"not null;default:false"`
+	SubscribeNews          bool   `json:"subscribe_news" gorm:"not null;default:true"`
+	SubscribeNotifications bool   `json:"subscribe_notifications" gorm:"not null;default:true"`
 }
 
 type UserFilter struct {

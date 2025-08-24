@@ -69,7 +69,7 @@ func (r *userPlanRepository) RenewPlan(ctx context.Context, userID uint, newEndD
 		}
 
 		//update the plan with new expiration date
-		userPlan.ExpiresAt = domain.CalculateExpirationDate(newEndDate, 0) // set to 00:00 of the specified date
+		userPlan.ExTime = domain.CalculateExpirationDate(newEndDate, 0) // set to 00:00 of the specified date
 
 		if err := tx.Save(&userPlan).Error; err != nil {
 			return err
@@ -94,8 +94,7 @@ func (r *userPlanRepository) CancelPlan(ctx context.Context, userID uint) error 
 			ChangedAt:  time.Now(),
 		}
 
-		userPlan.Status = domain.PlanStatusCanceled
-		userPlan.ExpiresAt = time.Now()
+		userPlan.ExTime = time.Now()
 
 		if err := tx.Save(&userPlan).Error; err != nil {
 			return err

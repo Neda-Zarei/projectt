@@ -18,7 +18,6 @@ func newUserServer(s userP.Service) pb.UserServiceServer {
 	return &userServiceServer{service: s}
 }
 
-// TODO: implement pb.UnimplementedUserServiceServer
 func (s *userServiceServer) ListUsers(ctx context.Context, uf *pb.UserFilter) (*pb.PaginatedUsers, error) {
 	res, err := s.service.ListUsers(ctx, &userD.UserFilter{
 		Name:  uf.Name,
@@ -29,7 +28,7 @@ func (s *userServiceServer) ListUsers(ctx context.Context, uf *pb.UserFilter) (*
 		return nil, err
 	}
 	return &pb.PaginatedUsers{
-		Users: util.Map(res.Users, UserDomain2Porto),
+		Users: util.Map(res.Users, UserDomain2Proto),
 		Total: res.Total,
 		Size:  res.Size,
 		Page:  res.Page,

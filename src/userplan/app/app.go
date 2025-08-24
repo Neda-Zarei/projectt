@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/config"
+	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/adapter/repository"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan"
 	planD "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/domain"
 	planP "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/plan/port"
@@ -29,9 +30,11 @@ type App interface {
 }
 
 type app struct {
-	cfg config.Config
-	log *zap.Logger
-	db  *gorm.DB
+	cfg         config.Config
+	log         *zap.Logger
+	db          *gorm.DB
+	userService userP.Service
+	planService planP.Service
 }
 
 func New(cfg config.Config, log *zap.Logger) (App, error) {
@@ -42,10 +45,24 @@ func New(cfg config.Config, log *zap.Logger) (App, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Initialize repositories
+	userRepo := repository.NewUserRepository(db)
+	planRepo := repository.NewPlanRepository(db)
+	userPlanRepo := repository.NewUserPlanRepository(db)
+	priceRepo := repository.NewPriceRepository(db)
+	limitationRepo := repository.NewLimitationRepository(db)
+
+	// Initialize services
+	userService := user.New(userRepo)
+	planService := plan.New(planRepo, userPlanRepo, priceRepo, limitationRepo)
+
 	return &app{
-		cfg: cfg,
-		log: log,
-		db:  db,
+		cfg:         cfg,
+		log:         log,
+		db:          db,
+		userService: userService,
+		planService: planService,
 	}, nil
 }
 
@@ -57,11 +74,15 @@ func initDB(c config.DBConfig, log *zap.Logger) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	//auto-migrate all models
 	err = db.AutoMigrate(
 		&userD.User{},
 		&planD.Plan{},
+		&planD.Price{},
+		&planD.Limitation{},
+		&planD.PlanLimitation{},
 		&planD.UserPlan{},
-		&planD.PlanHistory{},
 	)
 	if err != nil {
 		return nil, err
@@ -75,8 +96,6 @@ func (a *app) Logger() *zap.Logger { return a.log }
 
 func (a *app) DB() *gorm.DB { return a.db }
 
-// TODO: replace nil repo with implemented repo
-func (a *app) UserService() userP.Service { return user.New(userP.Repo(nil)) }
+func (a *app) UserService() userP.Service { return a.userService }
 
-// TODO: replace nil repo with implemented repo
-func (a *app) PlanService() planP.Service { return plan.New(planP.Repo(nil)) }
+func (a *app) PlanService() planP.Service { return a.planService }

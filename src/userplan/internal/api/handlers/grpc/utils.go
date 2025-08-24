@@ -2,30 +2,27 @@ package grpc
 
 import (
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/api/pb"
-	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/common"
 	userD "hamgit.ir/arcaptcha/arcaptcha-dumbledore/userplan/internal/user/domain"
 )
 
-func UserDomain2Porto(u *userD.User) *pb.User {
+func UserDomain2Proto(u *userD.User) *pb.User {
 	return &pb.User{
 		Id:     uint64(u.ID),
-		Name:   u.FirstName + " " + u.LastName,
+		Name:   u.Name,
 		Email:  u.Email,
 		Phone:  u.Phone,
-		Active: u.IsActive,
+		Active: u.Active,
 	}
 }
 
 func UserProto2Domain(u *pb.User) *userD.User {
 	return &userD.User{
-		BaseModel: common.BaseModel{
+		Basic: userD.Basic{
 			ID: uint(u.Id),
 		},
-		ExternalID: "", // ?
-		Email:      u.Email,
-		Phone:      u.Phone,
-		FirstName:  u.Name, // !
-		LastName:   u.Name, // !
-		IsActive:   u.Active,
+		Email:  u.Email,
+		Name:   u.Name,
+		Phone:  u.Phone,
+		Active: u.Active,
 	}
 }
