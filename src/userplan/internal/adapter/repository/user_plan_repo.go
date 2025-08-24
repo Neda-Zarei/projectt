@@ -160,3 +160,34 @@ func (r *userPlanRepository) GetExpiringPlans(ctx context.Context, daysThreshold
 
 	return plans, err
 }
+
+func (r *userPlanRepository) Create(ctx context.Context, userPlan *domain.UserPlan) error {
+	return r.db.WithContext(ctx).Create(userPlan).Error
+}
+
+func (r *userPlanRepository) GetActiveByUserID(ctx context.Context, userID uint) (*domain.UserPlan, error) {
+	var userPlan domain.UserPlan
+	err := r.db.WithContext(ctx).
+		Preload("Plan").
+		Where("user_id = ? AND deleted_at IS NULL", userID).
+		First(&userPlan).Error
+	return &userPlan, err
+}
+
+func (r *userPlanRepository) Update(ctx context.Context, userPlan *domain.UserPlan) error {
+	return r.db.WithContext(ctx).Save(userPlan).Error
+}
+
+func (r *userPlanRepository) GetUserHistory(ctx context.Context, userID uint) ([]*domain.UserPlan, error) {
+	var userPlans []*domain.UserPlan
+	err := r.db.WithContext(ctx).
+		Preload("Plan").
+		Where("user_id = ?", userID).
+		Order("created_at DESC").
+		Find(&userPlans).Error
+	return userPlans, err
+}
+
+func (r *userPlanRepository) SoftDelete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&domain.UserPlan{}, id).Error
+}

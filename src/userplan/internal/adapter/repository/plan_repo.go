@@ -51,3 +51,21 @@ func (r *planRepository) ListActive(ctx context.Context) ([]*domain.Plan, error)
 func (r *planRepository) Delete(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Delete(&domain.Plan{}, id).Error
 }
+
+func (r *planRepository) GetByTitle(ctx context.Context, title string) (*domain.Plan, error) {
+	var plan domain.Plan
+	err := r.db.WithContext(ctx).Where("title = ?", title).First(&plan).Error
+	return &plan, err
+}
+
+func (r *planRepository) List(ctx context.Context, includeInactive bool) ([]*domain.Plan, error) {
+	var plans []*domain.Plan
+	query := r.db.WithContext(ctx)
+
+	if !includeInactive {
+		query = query.Where("custom = ? OR payg = ?", true, true)
+	}
+
+	err := query.Find(&plans).Error
+	return plans, err
+}

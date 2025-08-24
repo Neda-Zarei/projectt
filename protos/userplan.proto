@@ -87,8 +87,8 @@ message UserPlanRequest {
 
 message RenewPlanRequest {
     uint64 user_id = 1; // from path
+    int64 end_date = 2;  // Unix timestamp
 }
-
 // Plan management messages
 message CreatePlanRequest {
     Plan plan = 1;

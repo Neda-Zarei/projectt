@@ -68,7 +68,7 @@ func GetExpiringPlans(cfg config.Config, log *zap.Logger, daysThreshold int) err
 		log.Info("Expiring plan",
 			zap.Uint("user_id", plan.UserID),
 			zap.Uint("plan_id", plan.PlanID),
-			zap.Time("expires_at", plan.ExpiresAt),
+			zap.Time("expires_at", plan.ExTime),
 		)
 	}
 
