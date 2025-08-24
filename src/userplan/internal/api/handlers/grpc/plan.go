@@ -43,7 +43,7 @@ func (s *planServiceServer) GetUserPlan(ctx context.Context, req *pb.UserPlanReq
 
 	//duration in days from ExTime
 	if !userPlan.ExTime.IsZero() {
-		duration := userPlan.ExTime.Sub(time.Now())
+		duration := time.Until(userPlan.ExTime)
 		resPB.DurationDays = int64(duration.Hours() / 24)
 	}
 
