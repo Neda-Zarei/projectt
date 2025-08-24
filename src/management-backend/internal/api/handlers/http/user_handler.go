@@ -17,6 +17,14 @@ func NewUserHandler(s port.Service) *UserHandler {
 	return &UserHandler{service: s}
 }
 
+// @Summary      Create new user
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        user  body  dto.CreateUserRequest  true  "User object"
+// @Success      201  {object}  dto.UserResponse
+// @Failure      default  {object}  dto.Error
+// @Router       /users [post]
 func (h *UserHandler) CreateUser(c echo.Context) error {
 	var req dto.CreateUserRequest
 	if err := c.Bind(&req); err != nil {
@@ -48,6 +56,17 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusCreated, response)
 }
 
+// @Summary      Get list of users (paginated + filter)
+// @Tags         user
+// @Produce      json
+// @Param        page   query  int    false  "Page number"
+// @Param        size   query  int    false  "Page size"
+// @Param        name   query  string false  "Filter by name"
+// @Param        email  query  string false  "Filter by email"
+// @Param        phone  query  string false  "Filter by phone"
+// @Success      200  {object}  dto.ListUsersResponse
+// @Failure      default  {object}  dto.Error
+// @Router       /users [get]
 func (h *UserHandler) ListUsers(c echo.Context) error {
 	page := parseQueryParamInt(c, "page", 1)
 	limit := parseQueryParamInt(c, "limit", 10)
@@ -91,6 +110,13 @@ func (h *UserHandler) ListUsers(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// @Summary      Get user by ID
+// @Tags         user
+// @Produce      json
+// @Param        id  path  string  true  "User ID"
+// @Success      200  {object}  dto.UserResponse
+// @Failure      default  {object}  dto.Error
+// @Router       /users/{id} [get]
 func (h *UserHandler) GetUser(c echo.Context) error {
 	id, err := parseUintParam(c, "id")
 	if err != nil {
@@ -114,6 +140,15 @@ func (h *UserHandler) GetUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// @Summary      Update user info
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string      true  "User ID"
+// @Param        user  body  dto.UserResponse true  "User object"
+// @Success      200  {object}  dto.UserResponse
+// @Failure      default  {object}  dto.Error
+// @Router       /users/{id} [put]
 func (h *UserHandler) UpdateUser(c echo.Context) error {
 	id, err := parseUintParam(c, "id")
 	if err != nil {
@@ -160,6 +195,15 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// @Summary      Activate/Deactivate user account
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        id  path  string  true  "User ID"
+// @Param        active body dto.ToggleUserActiveRequest  true  "Activation status"
+// @Success      200  {string}  string  "Status updated"
+// @Failure      default  {object}  dto.Error
+// @Router       /users/{id} [patch]
 func (h *UserHandler) ToggleUserActive(c echo.Context) error {
 	id, err := parseUintParam(c, "id")
 	if err != nil {

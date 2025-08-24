@@ -16,7 +16,69 @@ writing...
 
 > back to [outline](#table-of-contents)
 
-writing...
+### Swaggo Quickstart for Go + Echo
+
+1. **Install Swag CLI**
+
+   ```bash
+   go install github.com/swaggo/swag/cmd/swag@latest
+   swag --version
+   ```
+
+2. **Install Echo Swagger Middleware**
+
+   ```bash
+   go get github.com/swaggo/echo-swagger
+   ```
+
+3. **Add API Metadata**
+
+   ```go
+   // @title Your API
+   // @version 1.0
+   // @description API description
+   // @host localhost:8080
+   // @BasePath /api/v1
+   ```
+
+4. **Annotate Models**
+
+   ```go
+   type User struct {
+   ID string ` + "`json:\"id\" example:\"123\"`" + `
+   Name string ` + "`json:\"name\" example:\"John Doe\"`" + `
+   Email string ` + "`json:\"email\" example:\"john@example.com\"`" + `
+   }
+   ```
+
+5. **Annotate Handlers**
+
+   ```go
+   // @Summary Create user
+   // @Tags user
+   // @Accept json
+   // @Produce json
+   // @Param user body dto.User true "User object"
+   // @Success 201 {object} dto.User
+   // @Router /users [post]
+   ```
+
+6. **Generate Swagger Docs**
+
+   ```bash
+   swag init
+   ```
+
+7. **Serve Swagger UI in Echo**
+   ```go
+   import (
+   echoSwagger "github.com/swaggo/echo-swagger"
+   \_ "your_project/docs"
+   )
+   e.GET("/swagger/\*", echoSwagger.WrapHandler)
+   ```
+
+Access UI at: [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
 
 ## Project Structure
 

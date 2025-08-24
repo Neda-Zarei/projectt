@@ -120,3 +120,33 @@ func (h *PlanHandler) DeletePlan(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{"message": "Plan deleted successfully"})
 }
+
+// @Summary      Get active plans of a user
+// @Tags         plan
+// @Produce      json
+// @Param        id  path  string  true  "User ID"
+// @Success      200  {array}  dto.PlanResponse
+// @Failure      default  {object}  dto.Error
+// @Router       /users/{id}/plans [get]
+func (h *PlanHandler) UserPlan(c echo.Context) error { return nil }
+
+// @Summary      Assign new plan to user
+// @Tags         plan
+// @Accept       json
+// @Produce      json
+// @Param        id    path  string     true  "User ID"
+// @Param        plan  body  dto.PlanResponse true  "Plan object"
+// @Success      201  {object}  dto.PlanResponse
+// @Failure      default  {object}  dto.Error
+// @Router       /users/{id}/plans [post]
+func (h *PlanHandler) AssignPlan(c echo.Context) error { return nil }
+
+// @Summary      Renew a user's plan
+// @Tags         plan
+// @Produce      json
+// @Param        id      path  string  true  "User ID"
+// @Param        planId  path  string  true  "Plan ID"
+// @Success      200  {string}  string  "Plan renewed"
+// @Failure      default  {object}  dto.Error
+// @Router       /users/{id}/plans/{planId}/renew [post]
+func (h *PlanHandler) RenewPlan(c echo.Context) error { return nil }

@@ -39,3 +39,21 @@ type Pagination struct {
 	Limit int `json:"limit"`
 	Total int `json:"total"`
 }
+
+// Plan represents a subscription plan
+type PlanResponse struct {
+	ID        string `json:"id" example:"plan_001"`
+	Name      string `json:"name" example:"Premium"`
+	StartDate string `json:"startDate" example:"2025-01-01"`
+	EndDate   string `json:"endDate" example:"2025-12-31"`
+}
+
+// Error response
+type Error struct {
+	Code    int    `json:"code" example:"400"`
+	Message string `json:"message" example:"invalid request"`
+}
+
+type ToggleUserActiveRequest struct {
+    Active bool `json:"active"`
+}

@@ -3,7 +3,9 @@ package http
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/swaggo/echo-swagger"
 	"hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/app"
+	_ "hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/docs"
 	mw "hamgit.ir/arcaptcha/arcaptcha-dumbledore/management-backend/internal/api/middleware"
 )
 
@@ -15,11 +17,16 @@ type Handler struct {
 	plan *PlanHandler
 }
 
+// @title           Arcaptcha Internship Project API
+// @version         v1.0.0
+// @description     API for managing users and plans (User Service + User-Plan Service).
+// @host            localhost:8080
+// @BasePath        /api/v1
 func NewHandler(a app.App) *Handler {
 	return &Handler{
 		app:  a,
 		echo: echo.New(),
-		auth: NewAuthHandler(a.UserService(), a.Config().JWT),
+		auth: NewAuthHandler(a.UserService(), a.Config().JWT, a.Config().Arcaptcha),
 		user: NewUserHandler(a.UserService()),
 		plan: NewPlanHandler(a.PlanService()),
 	}
@@ -33,6 +40,7 @@ func (h *Handler) SetupRoutes() *echo.Echo {
 	e.Use(middleware.Recover())
 
 	//public routes
+	e.GET("api/swagger/*", echoSwagger.WrapHandler)
 	e.POST("/api/auth/login", h.auth.Login)
 
 	//protected routes
